@@ -1,4 +1,5 @@
 # Game of Life in JS
 
-Fullstack Academy workshop.
+Conway's Game of Life.
+Based on a Fullstack Academy workshop.
 
