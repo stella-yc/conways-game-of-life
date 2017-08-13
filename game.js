@@ -1,6 +1,6 @@
-var gameOfLife = {
-  width: 12,
-  height: 12, // width and height dimensions of the board
+const gameOfLife = {
+  width: 20,
+  height: 20, // width and height dimensions of the board
   stepInterval: null, // should be used to hold reference to an interval that is "playing" the game
 
   patterns: {
@@ -19,11 +19,11 @@ var gameOfLife = {
 
   createAndShowBoard: function () {
     // build the grid
-    var grid = document.createElement("tbody");
-    var tablehtml = '';
-    for (var h=0; h<this.height; h++) {
+    const grid = document.createElement("tbody");
+    let tablehtml = '';
+    for (let h = 0; h < this.height; h++) {
       tablehtml += "<tr id='row+" + h + "'>";
-      for (var w=0; w<this.width; w++) {
+      for (let w = 0; w < this.width; w++) {
         tablehtml += "<td data-status='dead' id='" + w + "-" + h + "'></td>";
       }
       tablehtml += "</tr>";
@@ -31,26 +31,32 @@ var gameOfLife = {
     grid.innerHTML = tablehtml;
 
     // add the grid to the #board element
-    var board = document.getElementById('board');
-    board.appendChild(grid);
+    document.getElementById('board').appendChild(grid);
 
     // once html elements are added to the page, attach events to them
     this.setupBoardEvents();
   },
 
+  removeBoard: function () {
+    const child = document.getElementsByTagName('tbody');
+    document.getElementById('board').removeChild(child[0]);
+  },
+
   /** Call iteratorFunc on every cell in the board **/
   forEachCell: function (iteratorFunc) {
-    var coordinates, cell;
-    for (var i = 0; i < this.width; i++) {
-      for (var j = 0; j < this.height; j++) {
-        coordinates = String(j) + '-' + String(i);
+    let coordinates, cell;
+    for (let i = 0; i < this.width; i++) {
+      for (let j = 0; j < this.height; j++) {
+        coordinates = String(i) + '-' + String(j);
         cell = document.getElementById(coordinates);
+        if (!cell) throw new Error(coordinates);
         iteratorFunc(cell, i, j);
       }
     }
   },
-  getCellStatus: function(cell) {
-    return cell.dataset.status;
+
+  isCellAlive: function(cell) {
+    return cell.dataset.status === 'alive';
   },
 
   setCellStatus: function(status, cell) {
@@ -72,7 +78,7 @@ var gameOfLife = {
   },
 
   randomCellState: function(cell) {
-    var r = Math.floor(Math.random() * 2) + 1;
+    let r = Math.floor(Math.random() * 2) + 1;
     if (r === 1) {
       this.setCellStatus('dead', cell);
     } else {
@@ -90,47 +96,65 @@ var gameOfLife = {
     // uses this fact to loop through all the ids and assign
     // them "click" events
 
-    var gol = this;
-    /** iterate through all cells and attach event listener **/
-    gol.forEachCell(function(cell) {
-      cell.addEventListener('click', function() {
-        gol.toggleCell(cell);
-      });
-    });
+    /** attach event listener to the board, and use event delegation **/
+    const onCellClick = event => this.toggleCell(event.target);
+    document.getElementById('board').onclick = onCellClick;
 
     /** Clear Button - clear the board **/
     document
       .getElementById('clear_btn')
-      .addEventListener('click', function() {
-        gol.clearBoard();
-        gol.stopAutoPlay();
+      .addEventListener('click', () => {
+        this.clearBoard();
+        this.stopAutoPlay();
       });
 
     /** Reset Button - set the cells to random values **/
     document
       .getElementById('reset_btn')
-      .addEventListener('click', gol.randomBoard.bind(gol));
+      .addEventListener('click', () => {
+        this.randomBoard();
+      });
 
     /** Step Button **/
     document
       .getElementById('step_btn')
-      .addEventListener('click', gol.step.bind(gol));
+      .addEventListener('click', () => {
+        this.step();
+      });
 
     /** Play Button - auto plays **/
     document
       .getElementById('play_btn')
-      .addEventListener('click', gol.enableAutoPlay.bind(gol));
+      .addEventListener('click', () => {
+        this.enableAutoPlay();
+      });
+
+
+    document
+      .getElementById('resize_btn')
+      .addEventListener('click', (event) => {
+        event.preventDefault();
+        let customWidth = document.getElementById('width').value;
+        let customHeight = document.getElementById('height').value;
+        console.log(customWidth, customHeight);
+        this.width = parseInt(customWidth, 10);
+        this.height = parseInt(customHeight, 10);
+        console.log('this.width, this.height', this.width, this.height);
+        this.removeBoard();
+        this.createAndShowBoard();
+      });
   },
 
   countNeighbors: function(cell) {
-    var [x, y] = cell.id.split('-').map((num => parseInt(num, 10)));
-    var count = 0;
-    for (var i = y - 1; i <= y + 1; i++) {
-      for (var j = x - 1; j<= x + 1; j++) {
+    let [x, y] = cell.id.split('-').map((num => parseInt(num, 10)));
+    let count = 0;
+    console.log('count neighbors');
+    for (let i = y - 1; i <= y + 1; i++) {
+      for (let j = x - 1; j<= x + 1; j++) {
         if (i === y && j === x) {
           continue;
         }
-        var neighbor = document.getElementById(`${j}-${i}`);
+        let neighbor = document.getElementById(`${j}-${i}`);
         if (neighbor && neighbor.className === 'alive') {
           count++;
         }
@@ -140,35 +164,33 @@ var gameOfLife = {
   },
 
   cellsToChange: function() {
-    var gol = this;
-    var cellsToToggle = [];
-    var calcNextState = function(cell) {
-      let neighbors = gol.countNeighbors(cell);
-      if (cell.dataset.status === 'alive') {
+    let cellsToToggle = [];
+    let calcNextState = (cell) => {
+      let neighbors = this.countNeighbors(cell);
+      if (this.isCellAlive(cell)) {
         if (neighbors < 2 || neighbors > 3) {
           cellsToToggle.push(cell);
         }
       }
-      if (cell.dataset.status === 'dead') {
+      if (!this.isCellAlive(cell)) {
         if (neighbors === 3) {
           cellsToToggle.push(cell);
         }
       }
     };
-    gol.forEachCell(calcNextState);
+    this.forEachCell(calcNextState);
     return cellsToToggle;
   },
 
   nextBoardState: function(arr) {
-    var gol = this;
-    arr.forEach(function(cell) {
-      gol.toggleCell(cell);
+    arr.forEach((cell) => {
+      this.toggleCell(cell);
     });
   },
 
   step: function () {
     // 1. find the cells whose status needs to change
-    var toBeToggled = this.cellsToChange();
+    const toBeToggled = this.cellsToChange();
 
     // 2. apply changes to the board
     this.nextBoardState(toBeToggled);
