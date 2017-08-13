@@ -37,7 +37,7 @@ var gameOfLife = {
   },
 
   setupBoardEvents: function() {
-    // each board cell has an CSS id in the format of: "x-y"
+    // each board cell has an id in the format of: "x-y"
     // where x is the x-coordinate and y the y-coordinate
     // uses this fact to loop through all the ids and assign
     // them "click" events that allow a user to click on
@@ -95,12 +95,6 @@ var gameOfLife = {
   },
 
   step: function () {
-    // Here is where you want to loop through all the cells
-    // on the board and determine, based on it's neighbors,
-    // whether the cell should be dead or alive in the next
-    // evolution of the game.
-    //
-    // You need to:
     // 1. Count alive neighbors for all cells
     // 2. Set the next state of all cells based on their alive neighbors
     var countNeighbors = function(cell) {
@@ -111,8 +105,8 @@ var gameOfLife = {
           if (i === y && j === x) {
             continue;
           }
-          let cell = document.getElementById(`${j}-${i}`);
-          if (cell && cell.className === 'alive') {
+          let neighbor = document.getElementById(`${j}-${i}`);
+          if (neighbor && neighbor.className === 'alive') {
             count++;
           }
         }
@@ -130,12 +124,13 @@ var gameOfLife = {
         cell.dataset.status = 'alive';
       }
     }
-    this.forEachCell(calcNextState);
 
     var stepState = function(cell) {
       let newStatus = cell.dataset.status;
       cell.className = newStatus;
     }
+
+    this.forEachCell(calcNextState);
     this.forEachCell(stepState);
   },
 
