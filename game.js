@@ -128,27 +128,11 @@ const gameOfLife = {
       .addEventListener('click', () => {
         this.enableAutoPlay();
       });
-
-
-    document
-      .getElementById('resize_btn')
-      .addEventListener('click', (event) => {
-        event.preventDefault();
-        let customWidth = document.getElementById('width').value;
-        let customHeight = document.getElementById('height').value;
-        console.log(customWidth, customHeight);
-        this.width = parseInt(customWidth, 10);
-        this.height = parseInt(customHeight, 10);
-        console.log('this.width, this.height', this.width, this.height);
-        this.removeBoard();
-        this.createAndShowBoard();
-      });
   },
 
   countNeighbors: function(cell) {
     let [x, y] = cell.id.split('-').map((num => parseInt(num, 10)));
     let count = 0;
-    console.log('count neighbors');
     for (let i = y - 1; i <= y + 1; i++) {
       for (let j = x - 1; j<= x + 1; j++) {
         if (i === y && j === x) {
